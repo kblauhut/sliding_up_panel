@@ -163,6 +163,14 @@ class SlidingUpPanel extends StatefulWidget {
   /// by default the Panel is open and must be swiped closed by the user.
   final PanelState defaultPanelState;
 
+  final bool enableTransform;
+
+  final double transformScale;
+
+  final BorderRadiusGeometry transformBorderRadius;
+
+  final Color transformBackground;
+
   SlidingUpPanel({
     Key key,
     this.panel,
@@ -199,8 +207,13 @@ class SlidingUpPanel extends StatefulWidget {
     this.slideDirection = SlideDirection.UP,
     this.defaultPanelState = PanelState.CLOSED,
     this.header,
-    this.footer
-  }) : assert(panel != null || panelBuilder != null),
+    this.footer,
+    this.enableTransform = false,
+    this.transformScale = 0.9,
+    this.transformBackground = Colors.black,
+    this.transformBorderRadius
+  }) : assert(enableTransform == false || transformBorderRadius != null),
+       assert(panel != null || panelBuilder != null),
        assert(0 <= backdropOpacity && backdropOpacity <= 1.0),
        assert (snapPoint == null || 0 < snapPoint && snapPoint < 1.0),
        super(key: key);
@@ -252,6 +265,9 @@ class _SlidingUpPanelState extends State<SlidingUpPanel> with SingleTickerProvid
       alignment: widget.slideDirection == SlideDirection.UP ? Alignment.bottomCenter : Alignment.topCenter,
       children: <Widget>[
 
+        widget.enableTransform ? Container(
+          color: widget.transformBackground,
+        ): Container(),
 
         //make the back widget take up the entire back side
         widget.body != null ? AnimatedBuilder(
@@ -265,7 +281,20 @@ class _SlidingUpPanelState extends State<SlidingUpPanel> with SingleTickerProvid
           child: Container(
             height: MediaQuery.of(context).size.height,
             width: MediaQuery.of(context).size.width,
-            child: widget.body,
+            child: widget.enableTransform ? AnimatedBuilder(
+              animation: _ac,
+              builder: (context, child){
+               return Transform.scale(
+                    scale: 1 - ((1 - widget.transformScale) * _ac.value),
+                    child: ClipRRect(
+                    borderRadius: _ac.value > 0.2 ? widget.transformBorderRadius : BorderRadius.circular(0),
+                    child: child,
+                  ),  
+                );
+              },
+              child: widget.body
+            ): widget.body,
+       
           ),
         ) : Container(),
 
